@@ -25,23 +25,30 @@ class SixSpec extends AnyFreeSpec {
     }
   }
 
-  "ints" - {
-    "fill list with random ints" in {
-      val (list, _) = ints(10)(simpleRNG)
-
-      assert(list.size == 10)
-    }
-
-    "return empty list when count is 0" in {
-      val (list, _) = ints(0)(simpleRNG)
-
-      assert(list.isEmpty)
-    }
-
-    "return empty list when count is less than 0" in {
-      val (list, _) = ints(-1)(simpleRNG)
-
-      assert(list.isEmpty)
-    }
+  "return value between 0 and 1 exclusive" in {
+    val (number, _) = doubleUsingMap(simpleRNG)
+    assert(number > 0)
+    assert(number < 1)
   }
+
+
+"ints" - {
+  "fill list with random ints" in {
+    val (list, _) = ints(10)(simpleRNG)
+
+    assert(list.size == 10)
+  }
+
+  "return empty list when count is 0" in {
+    val (list, _) = ints(0)(simpleRNG)
+
+    assert(list.isEmpty)
+  }
+
+  "return empty list when count is less than 0" in {
+    val (list, _) = ints(-1)(simpleRNG)
+
+    assert(list.isEmpty)
+  }
+}
 }

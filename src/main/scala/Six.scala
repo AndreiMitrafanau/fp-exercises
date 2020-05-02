@@ -1,3 +1,4 @@
+
 object Six {
   /**
    * Generates a random integer between 0 and Int.MaxValue (inclusive).
@@ -58,6 +59,33 @@ object Six {
 
     go(count, rng, Nil)
   }
+
+  type Rand[+A] = RNG => (A, RNG)
+
+  val int: Rand[Int] = _.nextInt
+
+  def unit[A](a: A): Rand[A] =
+    rng => (a, rng)
+
+  def map[A,B](s: Rand[A])(f: A => B): Rand[B] =
+    rng => {
+      val (a, rng2) = s(rng)
+      (f(a), rng2)
+    }
+
+  def doubleUsingMap(rng: RNG): (Double, RNG) = {
+    map(_ => nonNegativeInt(rng))((i: Int) => (s"0.$i".toDouble)).apply(rng)
+  }
+
+
+  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = {
+    rng => {
+      val (i1, rng1) = ra(rng)
+      val (i2, rng2) = rb(rng1)
+      (f(i1, i2), rng2)
+    }
+  }
+
 }
 
 
