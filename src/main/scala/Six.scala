@@ -8,8 +8,7 @@ object Six {
    */
   def nonNegativeInt(rng: RNG): (Int, RNG) = {
     val (i, rng2) = rng.nextInt
-    if (i == Int.MinValue || i < 0) nonNegativeInt(rng2)
-    else (i, rng2)
+    (if (i < 0) -(i + 1) else i, rng2)
   }
 
   /**
