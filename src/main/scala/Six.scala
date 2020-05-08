@@ -86,6 +86,10 @@ object Six {
     }
   }
 
+  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = {
+      fs.foldRight(unit(List[A]()))((f, acc) => map2(f, acc)(_ :: _))
+  }
+
 }
 
 
