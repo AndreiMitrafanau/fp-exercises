@@ -46,13 +46,13 @@ object Six {
    * Generates a list of random integers.
    *
    * @param count Int starting from 0
-   * @param rng context for generating nextInt
+   * @param rng   context for generating nextInt
    * @return tuple with List of values and new [[RNG]] context
    */
   def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
     def go(count: Int, rng: RNG, acc: List[Int]): (List[Int], RNG) = count match {
       case _ if count <= 0 => acc -> rng
-      case _ =>
+      case _               =>
         val (i, rng2) = rng.nextInt
         go(count - 1, rng2, i :: acc)
     }
@@ -67,7 +67,7 @@ object Six {
   def unit[A](a: A): Rand[A] =
     rng => (a, rng)
 
-  def map[A,B](s: Rand[A])(f: A => B): Rand[B] =
+  def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
     rng => {
       val (a, rng2) = s(rng)
       (f(a), rng2)
@@ -78,7 +78,7 @@ object Six {
   }
 
 
-  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = {
+  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = {
     rng => {
       val (i1, rng1) = ra(rng)
       val (i2, rng2) = rb(rng1)
@@ -87,9 +87,49 @@ object Six {
   }
 
   def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = {
-      fs.foldRight(unit(List[A]()))((f, acc) => map2(f, acc)(_ :: _))
+    fs.foldRight(unit(List[A]()))((f, acc) => map2(f, acc)(_ :: _))
   }
 
+  def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] =
+    rng => {
+      val (i1, rng1) = f(rng)
+      g(i1)(rng1)
+    }
+
+  def nonNegativeLessThan(n: Int): Rand[Int] = {
+    flatMap(nonNegativeInt) { i =>
+      val mod = i % n
+      if (i + (n-1) - mod >= 0) unit(mod) else nonNegativeLessThan(n)
+    }
+  }
+
+  def _map[A,B](s: Rand[A])(f: A => B): Rand[B] =
+    flatMap(s)(a => unit(f(a)))
+
+  def _map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    flatMap(ra)(a => map(rb)(b => f(a, b)))
+
+}
+
+case class State[S, +A](run: S => (A, S)) {
+  import State._
+  def map[B](f: A => B): State[S, B] =
+    flatMap(a => unit(f(a)))
+
+  def map2[B,C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
+    flatMap(a => sb.map(b => f(a, b)))
+
+  def flatMap[B](f: A => State[S, B]): State[S, B] = State(s => {
+    val (a, s1) = run(s)
+    f(a).run(s1)
+  })
+}
+
+object State {
+  type Rand[A] = State[RNG, A]
+
+  def unit[S, A](a: A): State[S, A] =
+    State(s => (a, s))
 }
 
 
